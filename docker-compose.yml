@@ -1,0 +1,37 @@
+services:
+  vault:
+    image: hashicorp/vault:1.20
+    container_name: vault-server
+    entrypoint: ["vault"]
+    command: ["server", "-config=/vault/config/vault.hcl"]
+    ports:
+      - "8201:8200"
+    volumes:
+      - ./config:/vault/config
+      - ./data:/vault/file
+    environment:
+      VAULT_ADDR: "http://127.0.0.1:8200"
+    cap_add:
+      - IPC_LOCK
+    restart: unless-stopped
+    networks:
+      - vaultnet
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: rootpassword
+      POSTGRES_DB: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    restart: unless-stopped
+    networks:
+      - vaultnet
+
+networks:
+  vaultnet:
+    driver: bridge
